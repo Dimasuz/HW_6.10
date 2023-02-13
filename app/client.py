@@ -3,14 +3,14 @@ import requests
 
 
 response = requests.post('http://127.0.0.1:5000/photo/',
-                        json={'input_path': 'start.txt',
-                            'output_path': 'finish.txt'
+                        json={"input_path": "start.txt",
+                            "output_path": "finish.txt"
                               }
                         )
 
 
-print(response.status_code)
-print(response.json())
+# print(response.status_code)
+# print(response.json())
 # print(response.text)
 
 # response = requests.get('http://127.0.0.1:5000/photo/1/')

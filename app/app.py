@@ -31,19 +31,18 @@ app = Flask('app')
 #     print(async_result.task_id)
 #     print(async_result.get())
 
-flask_app = Flask(__name__)
-flask_app.config.update(
-    CELERY_BROKER_URL='redis://localhost:6379',
-    CELERY_RESULT_BACKEND='redis://localhost:6379'
-)
-celery = make_celery(flask_app)
+# app.config.update(
+#     CELERY_BROKER_URL='redis://localhost:6379',
+#     CELERY_RESULT_BACKEND='redis://localhost:6379'
+# )
+# celery = make_celery(app)
 # Redis(app)
 
-@celery.task
+# @celery.task
 def upscale(input_path: str, output_path: str):
     with open(input_path, 'a') as f:
         f.write(f'\nstart = {datetime.datetime.now()}\n')
-        time.sleep(10)
+        time.sleep(2)
         f.write(f'finish = {datetime.datetime.now()}\n')
     shutil.copyfile(input_path, output_path)
 
@@ -55,8 +54,12 @@ class PhotoView(MethodView):
 
     def post(self):
         data = request.json
-        async_result = upscale.delay(data['input_path'], data['output_path'])
-        return jsonify({'async_result.task_id': f'{async_result.task_id}'})
+        print(data)
+        # async_result = upscale.delay(data['input_path'], data['output_path'])
+        # return jsonify({'async_result.task_id': f'{async_result.task_id}'})
+        result = upscale(data['input_path'], data['output_path'])
+
+        return jsonify(status='OK')
 
 
 @app.route('/')
