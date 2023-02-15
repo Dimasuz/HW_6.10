@@ -1,24 +1,15 @@
-import datetime
-import shutil
-import time
-
 from flask import Flask, jsonify, request
 
 from flask.views import MethodView
 
-# from tasks import upscale
-from tasks import make_celery
+from tasks import upscale
+# from tasks import make_celery
 
 
-
-
-# from errors import ApiError
-# from schema import CreateAdv, PatchDelAdv, validate
 
 
 app = Flask('app')
 
-# celery_app = Celery('tasks', backend='redis://127.0.0.1:6379/2', brocker='redis://127.0.0.1:6379/1')
 
 # @app.errorhandler(ApiError)
 # def error_handler(error: ApiError):
@@ -26,25 +17,6 @@ app = Flask('app')
 #     response.status_code = error.status_code
 #     return response
 
-# def main():
-#     async_result = upscale.delay()
-#     print(async_result.task_id)
-#     print(async_result.get())
-
-# app.config.update(
-#     CELERY_BROKER_URL='redis://localhost:6379',
-#     CELERY_RESULT_BACKEND='redis://localhost:6379'
-# )
-# celery = make_celery(app)
-# Redis(app)
-
-# @celery.task
-def upscale(input_path: str, output_path: str):
-    with open(input_path, 'a') as f:
-        f.write(f'\nstart = {datetime.datetime.now()}\n')
-        time.sleep(2)
-        f.write(f'finish = {datetime.datetime.now()}\n')
-    shutil.copyfile(input_path, output_path)
 
 class PhotoView(MethodView):
 
