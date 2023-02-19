@@ -1,37 +1,30 @@
 import requests
+import time
 
 
-
-response = requests.post('http://127.0.0.1:5050/photo/',
-                        json={"input_path": "start.txt",
-                            "output_path": "finish.txt"
-                              }
+print('POST')
+response = requests.post('http://127.0.0.1:5000/upscale',
+                        files={"input_path": open("start.txt", "rb")},
                         )
 
-
 print(response.status_code)
 # print(response.json())
 # print(response.text)
 
-response = requests.get('http://127.0.0.1:5050/photo/1/')
-
-print(response.status_code)
-print(response.text)
+# task_id = response.json()['task_id']
+# print(task_id)
 #
-# response = requests.post('http://127.0.0.1:5000/adv/',
-#                         json={'title': 'title_1',
-#                               'descr': 'descr_1',
-#                               'user_id': 2,
-#                               'password': '321',
-#                               }
-#                         )
-
-
+#
+# print('GET')
+# response = requests.get(f'http://127.0.0.1:5000/tasks/{task_id}')
+#
 # print(response.status_code)
-# print(response.json())
 # print(response.text)
-
-
-# app         | [2023-02-15 18:55:04,689: ERROR/MainProcess] consumer: Cannot connect to amqp://guest:**@127.0.0.1:5672//: [Errno 111] Connection refused.
-# app         | Trying again in 18.00 seconds... (9/100)
-
+#
+# time.sleep(3)
+#
+# response = requests.get(f'http://127.0.0.1:5000/tasks/{task_id}')
+#
+# print(response.status_code)
+# print(response.text)
+#
