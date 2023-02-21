@@ -3,6 +3,7 @@ import datetime
 import time
 
 from flask_pymongo import PyMongo
+from gridfs import GridFS, ObjectId
 from celery.result import AsyncResult
 from flask import Flask, jsonify, request
 
@@ -14,10 +15,10 @@ from upscale import upscale
 
 app = Flask('app')
 
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/1'
+app.config['CELERY_BROKER_URL'] = 'redis://db-redis:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://db-redis:6379/1'
 app.config['UPLOAD_FOLDER'] = 'files'
-app.config['MONGO_DSN'] = 'mongodb://app:123@localhost:27017/files?authSource=admin'
+app.config['MONGO_DSN'] = 'mongodb://app:123@127.0.0.1:27017/files?authSource=admin'
 
 celery_app = Celery(app.name, backend= app.config['CELERY_RESULT_BACKEND'], broker=app.config['CELERY_BROKER_URL'])
 
@@ -34,8 +35,8 @@ celery_app.Task = ContextTask
 
 
 @celery_app.task
-def upscale_app(input_path: str, output_path: str, mongo):
-    upscale(input_path, output_path, mongo)
+def upscale_app(input_path: str, output_path: str):
+    upscale(input_path, output_path)
 #     with open(input_path, 'a') as f:
 #         f.write(f'\nstart = {datetime.datetime.now()}\n')
 #         time.sleep(2)
@@ -60,7 +61,7 @@ class PhotoView(MethodView):
         return jsonify({"status": task.status})
 
     def post(self):
-        output_path = 'output_path'
+        output_path = 'output_path.png'
 
         # input_path = secure_filename(file_in.filename)
         # # print(filename_in)
@@ -69,27 +70,23 @@ class PhotoView(MethodView):
             file_in_name = f"{datetime.datetime.now()}-{file_in.filename}"
             input_path = str(mongo.save_file(file_in_name, file_in))
 
-        # input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename_in)
-        # print(f'{input_path=}')
-        # file_in.save(input_path)
         print(f'{input_path=}')
         print(f'{output_path=}')
         print(f'{file_in_name=}')
+        files = GridFS(mongo.db)
+        file_inn = files.get(ObjectId(input_path))
+        with open('start_img.png', 'wb') as image_in:
+            image_in.write(file_inn.read())
+        input_path = 'start_img.png'
 
-        file_inn = mongo.send_file(file_in_name)
-        with open(file_inn, 'a') as f:
-            f.write(f'\nstart = {datetime.datetime.now()}\n')
-            time.sleep(2)
-            f.write(f'finish = {datetime.datetime.now()}\n')
-        # shutil.copyfile(input_path, output_path)
-        file_out_name = f"{datetime.datetime.now()}-{output_path}"
-        file_out = str(mongo.save_file(file_out_name, file_inn))
-
-        # async_result = upscale_app.delay(input_path, output_path)
+        # file_out_name = f"{datetime.datetime.now()}-{output_path}"
+        # file_out = str(mongo.save_file(file_out_name, file_inn))
+        # print(file_out)
+        async_result = upscale_app.delay(input_path, output_path)
         # async_result = upscale_app(input_path, output_path, mongo)
-        # print(f'{async_result.task_id=}')
-        # return jsonify({'task_id': async_result.task_id})
-        return jsonify({'status': 'OK', 'file_out': file_out})
+        print(f'{async_result.task_id=}')
+        return jsonify({'task_id': async_result.task_id})
+        # return jsonify({'status': 'OK', 'file_out': file_out})
 
 
 # @app.route("/processed/<path: file>")

@@ -4,7 +4,7 @@ import time
 
 print('POST')
 response = requests.post('http://127.0.0.1:5000/upscale',
-                        files={"input_path": open("start.txt", "rb")},
+                        files={"input_path": open("lama_300px.png", "rb")},
                         )
 
 print(response.status_code)
