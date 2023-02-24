@@ -1,4 +1,12 @@
-API_URL='http://127.0.0.1:5000'
-# PG_DSN='postgresql://app:123@127.0.0.1:5431/hw_flask'
-# PG_DSN='sqlite:///sqlite3.db'
-MONGO_DSN:"mongodb://app:123@db-mongo:27017/files?authSource=admin"
+API_URL = "http://127.0.0.1:5000"
+import os
+
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+MONGO_DSN = "mongodb://app:123@127.0.0.1:27017/files?authSource=admin"
+MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+
+
+# CELERY_BROKER = os.getenv("CELERY_BROKER")
+# CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
+# MONGO_DSN = os.getenv("MONGO_DSN")
