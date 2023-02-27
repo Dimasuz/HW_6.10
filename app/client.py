@@ -11,21 +11,16 @@ response = requests.post(
 print(response.status_code)
 print(response.json())
 
-
-
 task_id = response.json()["task_id"]
-print(task_id)
-
 
 print("GET")
 response = requests.get(f"http://127.0.0.1:5000/tasks/{task_id}")
 
 print(response.status_code)
-print(response.text)
+print(response.json())
 
-time.sleep(5)
-
-response = requests.get(f"http://127.0.0.1:5000/tasks/{task_id}")
-
-print(response.status_code)
-print(response.text)
+while "PENDING" in response.text:
+    time.sleep(5)
+    response = requests.get(f"http://127.0.0.1:5000/tasks/{task_id}")
+    print(response.status_code)
+    print(response.json())

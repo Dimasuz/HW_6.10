@@ -1,5 +1,3 @@
-import time
-
 import cv2
 import numpy as np
 from cachetools import cached
@@ -22,16 +20,14 @@ def upscale(file_in, model_path: str = "EDSR_x2.pb"):
     :return:
     """
 
-    # scaler = get_model(model_path)
+    scaler = get_model(model_path)
 
     # декодирование входящего изображения
     nparr = np.fromstring(file_in, np.uint8)
-    # image_in = cv2.imdecode(nparr, cv2.CV_LOAD_IMAGE_COLOR)  # cv2.IMREAD_COLOR for opencv3.0+
     image_in = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-    # result = scaler.upsample(image_in)
-    result = image_in
-    time.sleep(3)
+    result = scaler.upsample(image_in)
+
     # кодирование исходящего изображения
     res, file_out = cv2.imencode(".png", result)
 

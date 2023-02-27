@@ -1,17 +1,14 @@
-import datetime
-import io
-import time
-
+from bson.objectid import ObjectId
 from cachetools import cached
-from celery import Celery
 from celery.result import AsyncResult
 from config import (CELERY_BROKER_URL, CELERY_RESULT_BACKEND,
                     MAX_CONTENT_LENGTH, MONGO_DSN)
 from flask import Flask, jsonify, request, send_file
 from flask.views import MethodView
 from flask_pymongo import PyMongo
-from gridfs import GridFS, ObjectId
-
+from gridfs import GridFS
+from nanoid import generate
+from tasks import celery_app, upscale_app
 from werkzeug.utils import secure_filename
 
 app = Flask("app")
@@ -21,52 +18,7 @@ app.config["CELERY_RESULT_BACKEND"] = CELERY_RESULT_BACKEND
 app.config["MONGO_DSN"] = MONGO_DSN
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 
-# Celery
-
-celery_app = Celery(
-    app.name,
-    backend=app.config["CELERY_RESULT_BACKEND"],
-    broker=app.config["CELERY_BROKER_URL"],
-)
-
 celery_app.conf.update(app.config)
-
-
-class ContextTask(celery_app.Task):
-    def __call__(self, *args, **kwargs):
-        with app.app_context():
-            return self.run(*args, **kwargs)
-
-
-celery_app.Task = ContextTask
-
-
-@celery_app.task
-def upscale_app(file_in_id):
-    print(f"{file_in_id=}")
-    # file_in_name, file_in = file_read(file_in_id)
-    # print(f"{file_in_name=}")
-    # file_in = file_in.read()
-    # file_out_name = f"image_out-{file_in_name}"
-    # print(f"{file_out_name=}")
-    # file_out = io.BytesIO(upscale(file_in))
-    # # file_out_id = file_save(file_out_name, file_out)
-    # # print(f'{file_out_id=}')
-    # # return file_out_id
-    # with open(file_out_name, "wb") as f:
-    #     f.write(file_out.getvalue())
-    # return file_out_name
-    a = 4
-    b = 5
-    time.sleep(3)
-    c = a + b
-    return c
-
-
-
-# -------
-
-# Mongo
 
 mongo = PyMongo(app, uri=app.config["MONGO_DSN"])
 
@@ -75,8 +27,6 @@ mongo = PyMongo(app, uri=app.config["MONGO_DSN"])
 def get_fs():
     return GridFS(mongo.db)
 
-
-# ---------
 
 ALLOWED_EXTENSIONS = set(["png", "jpg", "jpeg", "gif"])
 
@@ -100,7 +50,6 @@ def file_read(file_id: str):
 class PhotoView(MethodView):
     def get(self, file_id: str):
         filename, file = file_read(file_id)
-
         return send_file(file, as_attachment=False, download_name=filename)
 
     def post(self):
@@ -109,15 +58,13 @@ class PhotoView(MethodView):
             file_name = secure_filename(file.filename)
             if not allowed_file(file_name):
                 return jsonify({"status": "404 - wrong type of the file"})
-            file_in_name = f"{datetime.datetime.now().time()}_{file_name}"
+            file_in_name = f"{generate(size=5)}_{file_name}"
             file_in_id = file_save(file_in_name, file)
         else:
             return jsonify({"status": "404 - file not found"})
 
         async_result = upscale_app.delay(file_in_id)
         return jsonify({"task_id": async_result.task_id})
-        # file_out_id = upscale_app(file_in_id)
-        # return jsonify({'status': 'POST 200', 'file_out_id=': file_out_id})
 
 
 #
@@ -130,14 +77,15 @@ def index():
 @app.route("/tasks/<string:task_id>")
 def get_task(task_id: str):
     task = AsyncResult(task_id, app=celery_app)
-    if task.status == " SUCCESS":
-        return jsonify({"status": task.status, "result": task.result})
+    if task.status == "SUCCESS":
+        return jsonify({"status": task.status, "file_id": task.result})
     return jsonify({"status": task.status})
 
 
 photo_view = PhotoView.as_view("photo_view")
 app.add_url_rule("/upscale", view_func=photo_view, methods=["POST"])
 app.add_url_rule("/upscale/<string:file_id>", view_func=photo_view, methods=["GET"])
+
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)

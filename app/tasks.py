@@ -1,43 +1,48 @@
-# import datetime
-# import shutil
-# import time
-#
-# from celery import Celery
-#
-# from app import app
-#
-# # # import cv2
-# # # from cv2 import dnn_superres
-#
-#
-# # celery_app = celery.Celery('tasks', backend='redis://127.0.0.1:6378/0', brocker='redis://127.0.0.1:6378/1')
-# celery_app = Celery(
-#     app.name,
-#     backend=app.config["CELERY_RESULT_BACKEND"],
-#     broker=app.config["CELERY_BROKER_URL"],
-# )
+import io
 
-# @app.tasks
-# def upscale(input_path: str, output_path: str, model_path: str = 'EDSR_x2.pb') -> None:
-#     """
-#     :param input_path: путь к изображению для апскейла
-#     :param output_path:  путь к выходному файлу
-#     :param model_path: путь к ИИ модели
-#     :return:
-#     """
-#
-#     scaler = dnn_superres.DnnSuperResImpl_create()
-#     scaler.readModel(model_path)
-#     scaler.setModel("edsr", 2)
-#     image = cv2.imread(input_path)
-#     result = scaler.upsample(image)
-#     cv2.imwrite(output_path, result)
+import pymongo
+from bson.objectid import ObjectId
+from cachetools import cached
+from celery import Celery
+from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, MONGO_DSN
+from gridfs import GridFS
+from upscale import upscale
 
-#
-# @celery_app.task
-# def upscale(input_path: str, output_path: str):
-#     with open(input_path, "a") as f:
-#         f.write(f"\nstart = {datetime.datetime.now()}\n")
-#         time.sleep(2)
-#         f.write(f"finish = {datetime.datetime.now()}\n")
-#     shutil.copyfile(input_path, output_path)
+celery_app = Celery(
+    "app",
+    backend=CELERY_RESULT_BACKEND,
+    broker=CELERY_BROKER_URL,
+)
+
+
+@cached({})
+def get_fs():
+    mongo = pymongo.MongoClient(MONGO_DSN)
+    return GridFS(mongo["files"])
+
+
+def file_save(file_name: str, file) -> str:
+    """save file in mongo"""
+    files = get_fs()
+    file = files.put(file, filename=file_name)
+    return str(file)
+
+
+def file_read(file_id: str):
+    """get file from mongo"""
+    files = get_fs()
+    file = files.get(ObjectId(file_id))
+    return file.name, file
+
+
+@celery_app.task
+def upscale_app(file_in_id):
+    file_in_name, file_in = file_read(file_in_id)
+    file_in = file_in.read()
+    file_out_name = f"image_out-{file_in_name}"
+    file_out = upscale(file_in)
+    file_out = io.BytesIO(file_out)
+    file_out_id = file_save(file_out_name, file_out.getvalue())
+    return file_out_id
+
+# celery -A tasks.celery_app worker -l info -P gevent
