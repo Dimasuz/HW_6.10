@@ -4,8 +4,9 @@ import pymongo
 from bson.objectid import ObjectId
 from cachetools import cached
 from celery import Celery
-from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, MONGO_DSN
 from gridfs import GridFS
+
+from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, MONGO_DSN
 from upscale import upscale
 
 celery_app = Celery(
@@ -44,5 +45,3 @@ def upscale_app(file_in_id):
     file_out = io.BytesIO(file_out)
     file_out_id = file_save(file_out_name, file_out.getvalue())
     return file_out_id
-
-# celery -A tasks.celery_app worker -l info -P gevent

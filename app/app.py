@@ -1,15 +1,16 @@
 from bson.objectid import ObjectId
 from cachetools import cached
 from celery.result import AsyncResult
-from config import (CELERY_BROKER_URL, CELERY_RESULT_BACKEND,
-                    MAX_CONTENT_LENGTH, MONGO_DSN)
 from flask import Flask, jsonify, request, send_file
 from flask.views import MethodView
 from flask_pymongo import PyMongo
 from gridfs import GridFS
 from nanoid import generate
-from tasks import celery_app, upscale_app
 from werkzeug.utils import secure_filename
+
+from config import (CELERY_BROKER_URL, CELERY_RESULT_BACKEND,
+                    MAX_CONTENT_LENGTH, MONGO_DSN)
+from tasks import celery_app, upscale_app
 
 app = Flask("app")
 
@@ -64,7 +65,7 @@ class PhotoView(MethodView):
             return jsonify({"status": "404 - file not found"})
 
         async_result = upscale_app.delay(file_in_id)
-        return jsonify({"task_id": async_result.task_id})
+        return jsonify({"task_id": async_result.task_id, "file_in_id": file_in_id})
 
 
 #
