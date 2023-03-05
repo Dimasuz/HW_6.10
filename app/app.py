@@ -8,13 +8,13 @@ from gridfs import GridFS
 from nanoid import generate
 from werkzeug.utils import secure_filename
 
-from config import (CELERY_BROKER_URL, CELERY_RESULT_BACKEND,
+from config import (CELERY_BROKER, CELERY_RESULT_BACKEND,
                     MAX_CONTENT_LENGTH, MONGO_DSN)
 from tasks import celery_app, upscale_app
 
 app = Flask("app")
 
-app.config["CELERY_BROKER_URL"] = CELERY_BROKER_URL
+app.config["CELERY_BROKER"] = CELERY_BROKER
 app.config["CELERY_RESULT_BACKEND"] = CELERY_RESULT_BACKEND
 app.config["MONGO_DSN"] = MONGO_DSN
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
@@ -38,8 +38,10 @@ def allowed_file(filename):
 
 def file_save(file_name: str, file) -> str:
     """save file in mongo"""
-    return str(mongo.save_file(file_name, file))
-
+    # return str(mongo.save_file(file_name, file))
+    files = get_fs()
+    file = files.put(file, filename=file_name)
+    return str(file)
 
 def file_read(file_id: str):
     """get file from mongo"""

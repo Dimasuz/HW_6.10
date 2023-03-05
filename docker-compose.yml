@@ -28,21 +28,38 @@ services:
       dev_network:
         aliases:
           - db-mongo
-#  app:
-#    build:
-#      context: .
-#    environment:
-#      CELERY_RESULT_BACKEND: "redis://db-redis:6379/1"
-#      CELERY_BROKER: "redis://db-redis:6379/0"
-#      MONGO_DSN: "mongodb://app:123@db-mongo:27017/files?authSource=admin"
-#    ports:
-#      - "5000:5000"
-#    container_name: app
-#    depends_on:
-#      - mongo
-#    networks:
-#      dev_network:
-#        aliases:
-#          - flask
-#    volumes:
-#      - ./app:/app
+
+  app:
+    build:
+      context: .
+    environment:
+      CELERY_RESULT_BACKEND: "redis://db-redis:6379/1"
+      CELERY_BROKER: "redis://db-redis:6379/2"
+      MONGO_DSN: "mongodb://app:123@db-mongo:27017/files?authSource=admin"
+    ports:
+      - "5000:5000"
+    container_name: app
+    depends_on:
+      - mongo
+    networks:
+      dev_network:
+        aliases:
+          - flask
+    volumes:
+      - ./app:/app
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    environment:
+      CELERY_RESULT_BACKEND: "redis://db-redis:6379/1"
+      CELERY_BROKER: "redis://db-redis:6379/2"
+      MONGO_DSN: "mongodb://app:123@db-mongo:27017/files?authSource=admin"
+    container_name: celery
+    depends_on:
+      - mongo
+    networks:
+      dev_network:
+    volumes:
+      - ./app:/app

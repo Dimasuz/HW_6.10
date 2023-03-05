@@ -26,7 +26,7 @@ def test_(client):
     """POST"""
     response = client.post(
         "http://127.0.0.1:5000/upscale",
-        data={"input_path": open("test.png", "rb")},
+        data={"input_path": open("tests/test.png", "rb")},
     )
     assert response.status_code == 200
     assert response.json["task_id"]

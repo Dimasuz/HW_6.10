@@ -6,13 +6,13 @@ from cachetools import cached
 from celery import Celery
 from gridfs import GridFS
 
-from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, MONGO_DSN
+from config import CELERY_BROKER, CELERY_RESULT_BACKEND, MONGO_DSN
 from upscale import upscale
 
 celery_app = Celery(
     "app",
     backend=CELERY_RESULT_BACKEND,
-    broker=CELERY_BROKER_URL,
+    broker=CELERY_BROKER,
 )
 
 
