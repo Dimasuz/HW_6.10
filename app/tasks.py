@@ -4,9 +4,8 @@ import pymongo
 from bson.objectid import ObjectId
 from cachetools import cached
 from celery import Celery
-from gridfs import GridFS
-
 from config import CELERY_BROKER, CELERY_RESULT_BACKEND, MONGO_DSN
+from gridfs import GridFS
 from upscale import upscale
 
 celery_app = Celery(

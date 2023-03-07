@@ -1,16 +1,15 @@
 from bson.objectid import ObjectId
 from cachetools import cached
 from celery.result import AsyncResult
+from config import (CELERY_BROKER, CELERY_RESULT_BACKEND, MAX_CONTENT_LENGTH,
+                    MONGO_DSN)
 from flask import Flask, jsonify, request, send_file
 from flask.views import MethodView
 from flask_pymongo import PyMongo
 from gridfs import GridFS
 from nanoid import generate
-from werkzeug.utils import secure_filename
-
-from config import (CELERY_BROKER, CELERY_RESULT_BACKEND,
-                    MAX_CONTENT_LENGTH, MONGO_DSN)
 from tasks import celery_app, upscale_app
+from werkzeug.utils import secure_filename
 
 app = Flask("app")
 
@@ -42,6 +41,7 @@ def file_save(file_name: str, file) -> str:
     files = get_fs()
     file = files.put(file, filename=file_name)
     return str(file)
+
 
 def file_read(file_id: str):
     """get file from mongo"""

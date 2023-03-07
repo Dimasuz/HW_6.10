@@ -17,23 +17,8 @@ celery -A tasks.celery_app worker -c 1
 4. запустить в терминале API
 python app.py
 
-Далее для проверки можно запустить client.py
+5. Далее для проверки можно запустить client
 
-Все работает.
-
-Но если собрать для celery и API доккеры, 
-то получаем какую-то ошибку соединения с Mongo:
-"""
-pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: 
-[Errno 111] Connection refused, Timeout: 30s, Topology Description: 
-<TopologyDescription id: 640488e6ca009bc201e07816, topology_type: 
-Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) 
-server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: 
-[Errno 111] Connection refused')>]>
-"""
-Перепробавона множество вариантов настройти flask с mongo,
-ничего не помогло.
-Мало того, попробовал загрузить проект со ссылки на лекции, получил туже ошибку.
-
-
+6. Также можно запустить в доккере celery и app
 docker-compose up celery
+docker-compose up app
